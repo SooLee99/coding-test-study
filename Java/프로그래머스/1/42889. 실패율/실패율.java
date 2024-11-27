@@ -5,8 +5,8 @@ class Solution {
         // 1. 스테이지별 사용자 수를 저장 (1번부터 N번까지만 관리)
         int[] usersAtStage = new int[N];
         for (int stage : stages) {
-            if (stage <= N) { // N + 1은 모든 스테이지를 클리어한 사용자 → 무시
-                usersAtStage[stage - 1]++;
+            if (stage <= N) {
+                usersAtStage[stage]++;
             }
         }
 
