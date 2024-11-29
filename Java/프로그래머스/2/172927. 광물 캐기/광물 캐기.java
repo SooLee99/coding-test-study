@@ -1,270 +1,87 @@
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.*;
 
 class Solution {
-    public int solution(int[] picks, String[] minerals) {
-        return new Mine().calculateMinFatigue(picks, minerals);
+    public static int solution(int[] picks, String[] minerals) {
+        Mining mining = new Mining(picks, minerals);
+        return mining.calculateMinFatigue();
+    }
+}
+
+
+class Mining {
+    private final int[] picks;                      // 각 곡괭이의 개수
+    private final String[] minerals;                // 광물 배열
+    private final int[][] fatigue;                  // 곡괭이별 피로도 테이블
+    private final List<int[]> mineralGroups;        // 그룹화된 광물 데이터
+
+    public Mining(int[] picks, String[] minerals) {
+        this.picks = picks;
+        this.minerals = minerals;
+
+        // 피로도 테이블 (곡괭이별 광물 피로도)
+        this.fatigue = new int[][]{
+                {1, 1, 1},    // 다이아몬드 곡괭이
+                {5, 1, 1},    // 철 곡괭이
+                {25, 5, 1}    // 돌 곡괭이
+        };
+
+        this.mineralGroups = new ArrayList<>();
+        groupMinerals(); // 광물을 그룹화
     }
 
-    private static class Mine {
-        public int calculateMinFatigue(int[] picks, String[] minerals) {
-            return calculateMinFatigue(
-                    Picks.of(picks),
-                    Minerals.of(minerals)
-            );
-        }
+    /**
+     * 1. 광물을 그룹화하여 그룹당 다이아, 철, 돌의 개수를 배열로 저장
+     */
+    private void groupMinerals() {
+        int totalPicks = Arrays.stream(picks).sum(); // 사용할 수 있는 곡괭이 수 계산
 
-        public int calculateMinFatigue(Picks picks, Minerals minerals) {
-            return minerals.digInMinFatigue(picks);
-        }
-    }
-
-    private static class Minerals {
-        private final List<Mineral> minerals;
-
-        public Minerals(List<Mineral> minerals) {
-            this.minerals = minerals;
-        }
-
-        public static Minerals of(String[] minerals) {
-            return Arrays.stream(minerals)
-                    .map(MineralType::findType)
-                    .map(Mineral::new)
-                    .collect(Collectors.collectingAndThen(Collectors.toList(), Minerals::new));
-        }
-
-        public int digFrom(Pick pick) {
-            return minerals.stream()
-                    .mapToInt(pick::dig)
-                    .sum();
-        }
-
-        public int digInMinFatigue(Picks picks) {
-            int fatigue = 0;
-
-            List<Minerals> toDig = IntStream.range(0, Integer.min(picks.size(),
-                            minerals.size() / 5 + (minerals.size() % 5 > 0 ? 1 : 0)))
-                    .mapToObj(i -> minerals.subList(i * 5, Integer.min(5 + i * 5, minerals.size())))
-                    .map(Minerals::new)
-                    .sorted(compareTo().reversed())
-                    .collect(Collectors.toList());
-
-            for (Minerals next : toDig) {
-                Optional<Pick> pick = picks.pollFor(next);
-
-                if (pick.isEmpty()) {
-                    break;
+        // 광물을 5개씩 그룹화
+        for (int i = 0; i < minerals.length && totalPicks > 0; i += 5) {
+            int[] group = new int[3]; // [diamond, iron, stone]
+            for (int j = i; j < i + 5 && j < minerals.length; j++) {
+                switch (minerals[j]) {
+                    case "diamond": group[0]++; break;
+                    case "iron": group[1]++; break;
+                    case "stone": group[2]++; break;
                 }
-                fatigue += pick.get().dig(next);
             }
-
-            return fatigue;
+            mineralGroups.add(group);
+            totalPicks--; // 그룹 하나당 곡괭이 하나 사용
         }
 
-        private Comparator<Minerals> compareTo() {
-            return Comparator.comparingInt(a -> a.minerals.stream()
-                    .mapToInt(Mineral::weight)
-                    .sum());
-        }
     }
 
-    private static class Mineral {
-        private static final Map<MineralType, Function<Pick, Integer>> DIGGING = Map.of(
-                MineralType.DIAMOND, Pick::digDiamond,
-                MineralType.IRON, Pick::digIron,
-                MineralType.STONE, Pick::digStone
-        );
-        private final MineralType mineralType;
+    /**
+     * 2. 최적의 곡괭이를 선택해 그룹을 처리하고 최소 피로도를 계산
+     */
+    public int calculateMinFatigue() {
+        int totalFatigue = 0;
 
-        public Mineral(MineralType mineralType) {
-            this.mineralType = mineralType;
+        // 각 그룹에 대해 최적의 곡괭이를 선택
+        for (int[] group : mineralGroups) {
+            int pickIndex = getAvailablePickIndex();
+            if (pickIndex == -1) break; // 사용할 곡괭이가 없는 경우 중단
+            totalFatigue += calculateFatigue(group, fatigue[pickIndex]);
+            picks[pickIndex]--; // 사용한 곡괭이 개수 감소
         }
 
-        public int digFrom(Pick pick) {
-            return DIGGING.get(mineralType).apply(pick);
-        }
-
-        public int weight() {
-            return mineralType.getWeight();
-        }
+        return totalFatigue;
     }
 
-    private enum MineralType {
-        DIAMOND("diamond", 25),
-        IRON("iron", 5),
-        STONE("stone", 1);
-
-        private final String type;
-        private final int weight;
-
-        MineralType(String type, int weight) {
-            this.type = type;
-            this.weight = weight;
+    /**
+     * 현재 사용할 수 있는 곡괭이의 인덱스를 반환 (우선순위: 다이아몬드 > 철 > 돌)
+     */
+    private int getAvailablePickIndex() {
+        for (int i = 0; i < picks.length; i++) {
+            if (picks[i] > 0) return i;
         }
-
-        public static MineralType findType(String type) {
-            return Arrays.stream(values())
-                    .filter(mineralType -> mineralType.type.equals(type))
-                    .findAny()
-                    .orElseThrow();
-        }
-
-        public int getWeight() {
-            return weight;
-        }
+        return -1; // 사용할 곡괭이가 없음
     }
 
-    private static class Picks {
-        private final List<Pick> picks;
-
-        public Picks(List<Pick> picks) {
-            this.picks = picks;
-        }
-
-        public static Picks of(int[] picks) {
-            return new Picks(List.of(
-                    new DiamondPick(picks[0]),
-                    new IronPick(picks[1]),
-                    new StonePick(picks[2])
-            ));
-        }
-
-        public Optional<Pick> pollFor(Minerals minerals) {
-            return picks.stream()
-                    .filter(Pick::isNotEmpty)
-                    .min(Comparator.comparingInt(pick -> pick.dig(minerals)))
-                    .map(pick -> {
-                        pick.decrease();
-                        return pick;
-                    });
-        }
-
-        public int size() {
-            return picks.stream()
-                    .mapToInt(Pick::getSize)
-                    .sum();
-        }
-    }
-
-    private interface Pick {
-        int dig(Minerals minerals);
-
-        int dig(Mineral mineral);
-
-        int digDiamond();
-
-        int digIron();
-
-        int digStone();
-
-        void decrease();
-
-        boolean isNotEmpty();
-
-        int getSize();
-    }
-
-    private static abstract class AbstractPick implements Pick {
-        protected MineralType mineralType;
-        protected Integer count;
-
-        public AbstractPick(MineralType mineralType, int count) {
-            this.mineralType = mineralType;
-            this.count = count;
-        }
-
-        @Override
-        public int dig(Minerals minerals) {
-            return minerals.digFrom(this);
-        }
-
-        @Override
-        public int dig(Mineral mineral) {
-            return mineral.digFrom(this);
-        }
-
-        @Override
-        public void decrease() {
-            count--;
-        }
-
-        @Override
-        public boolean isNotEmpty() {
-            return count > 0;
-        }
-
-        @Override
-        public int getSize() {
-            return count;
-        }
-    }
-
-    private static class DiamondPick extends AbstractPick {
-        public DiamondPick(int count) {
-            super(MineralType.DIAMOND, count);
-        }
-
-        @Override
-        public int digDiamond() {
-            return 1;
-        }
-
-        @Override
-        public int digIron() {
-            return 1;
-        }
-
-        @Override
-        public int digStone() {
-            return 1;
-        }
-    }
-
-    private static class IronPick extends AbstractPick {
-        public IronPick(int count) {
-            super(MineralType.IRON, count);
-        }
-
-        @Override
-        public int digDiamond() {
-            return 5;
-        }
-
-        @Override
-        public int digIron() {
-            return 1;
-        }
-
-        @Override
-        public int digStone() {
-            return 1;
-        }
-    }
-
-    private static class StonePick extends AbstractPick {
-        public StonePick(int count) {
-            super(MineralType.STONE, count);
-        }
-
-        @Override
-        public int digDiamond() {
-            return 25;
-        }
-
-        @Override
-        public int digIron() {
-            return 5;
-        }
-
-        @Override
-        public int digStone() {
-            return 1;
-        }
+    /**
+     * 특정 그룹에서 주어진 곡괭이로 채굴했을 때의 피로도 계산
+     */
+    private int calculateFatigue(int[] group, int[] pickFatigue) {
+        return group[0] * pickFatigue[0] + group[1] * pickFatigue[1] + group[2] * pickFatigue[2];
     }
 }
