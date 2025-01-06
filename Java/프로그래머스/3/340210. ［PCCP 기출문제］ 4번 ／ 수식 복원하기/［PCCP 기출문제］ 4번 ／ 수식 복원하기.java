@@ -1,123 +1,103 @@
 import java.util.*;
 
 class Solution {
-    // 2~9진법중 하나
-    // 덧셈, 뺄셈 수식만 나옴
-    // 불확실한 결과값은 ?로 표시
+    /**
+     * 수식을 분석하여 주어진 진법(2~9) 중 유효한 진법을 찾고
+     * 지워진 결과값을 채운 수식을 반환하는 메서드
+     */
     public String[] solution(String[] expressions) {
-        // 결과값 지워진 수식 저장필요
-        ArrayDeque<String> uncompleteExpression = new ArrayDeque<>();
+        ArrayDeque<String> incompleteExpressions = new ArrayDeque<>();
+        boolean[] validBases = initializeValidBases();
 
-        // 초기
-        boolean[] valid = new boolean[10];
-        Arrays.fill(valid, true);
-        valid[0] = false;
-        valid[1] = false;
-
-        // 각 자리수 최대 숫자 + 1 진법 ~ 9 진법
         for (String expression : expressions) {
-            String[] e = expression.split(" ");
-            // System.out.println(Arrays.toString(e));
-
-            // A +- B = C 이므로 0, 1, 2, 3, 4
-            boolean complete = true;
+            String[] parts = expression.split(" ");
+            boolean isComplete = true;
             int maxValue = 0;
+
             for (int i = 0; i < 5; i += 2) {
-                if (!"X".equals(e[i])) {
-                    maxValue = Math.max(maxValue, getMaxValue(e[i]));
+                if (!"X".equals(parts[i])) {
+                    maxValue = Math.max(maxValue, getMaxDigit(parts[i]));
                 } else {
-                    // X 있으면 큐에 저장
-                    uncompleteExpression.offer(expression);
-                    complete = false;
+                    incompleteExpressions.offer(expression);
+                    isComplete = false;
                 }
             }
-
-            // maxValue를 통해 진법 갱신
-            for (int i = 2; i <= maxValue; i++) {
-                valid[i] = false;
-            }
-
-            // 현재 진법 범위로 실제 계산 해봄
-            if (!complete) {
-                continue;
-            }
-
-            for (int jinbup = 2; jinbup <= 9; jinbup++) {
-                if (!valid[jinbup]) {
-                    continue;
-                }
-
-                int result = Integer.parseInt(e[0], jinbup);
-                if ("+".equals(e[1])) {
-                    result += Integer.parseInt(e[2], jinbup);
-                } else {
-                    result -= Integer.parseInt(e[2], jinbup);
-                }
-                int trueResult = Integer.parseInt(e[4], jinbup);
-
-                // System.out.printf("진법 %d : %d = %d\n", jinbup, result, trueResult);
-
-                if (trueResult != result) {
-                    valid[jinbup] = false;
-                }
-            }
+            updateValidBases(validBases, maxValue);
+            if (!isComplete) continue;
+            validateExpression(parts, validBases);
         }
 
-        // System.out.println(Arrays.toString(valid));
+        return resolveIncompleteExpressions(incompleteExpressions, validBases);
+    }
 
-        String[] answer = new String[uncompleteExpression.size()];
+    /**
+     * 초기 진법 배열을 설정합니다 (2~9 진법만 유효).
+     */
+    private boolean[] initializeValidBases() {
+        boolean[] valid = new boolean[10];
+        Arrays.fill(valid, true);
+        valid[0] = valid[1] = false;
+        return valid;
+    }
+
+    /**
+     * 수식의 각 부분을 진법 변환해 유효성을 검증합니다.
+     */
+    private void validateExpression(String[] parts, boolean[] validBases) {
+        for (int base = 2; base <= 9; base++) {
+            if (!validBases[base]) continue;
+            int left = Integer.parseInt(parts[0], base);
+            int right = Integer.parseInt(parts[2], base);
+            int expected = Integer.parseInt(parts[4], base);
+            int result = parts[1].equals("+") ? left + right : left - right;
+            if (result != expected) validBases[base] = false;
+        }
+    }
+
+    /**
+     * 미완성 수식을 채워서 결과 배열을 반환합니다.
+     */
+    private String[] resolveIncompleteExpressions(ArrayDeque<String> incompleteExpressions, boolean[] validBases) {
+        String[] answer = new String[incompleteExpressions.size()];
         int idx = 0;
-        // 남은 수식 진법으로 계산
-        while (!uncompleteExpression.isEmpty()) {
-            String expression = uncompleteExpression.poll();
-            Set<String> resultSet = new HashSet<>();
-            String[] e = expression.split(" ");
 
-            for (int jinbup = 2; jinbup <= 9; jinbup++) {
-                if (!valid[jinbup]) {
-                    continue;
-                }
+        while (!incompleteExpressions.isEmpty()) {
+            String expression = incompleteExpressions.poll();
+            Set<String> results = new HashSet<>();
+            String[] parts = expression.split(" ");
 
-                int result = Integer.parseInt(e[0], jinbup);
-                if ("+".equals(e[1])) {
-                    result += Integer.parseInt(e[2], jinbup);
-                } else {
-                    result -= Integer.parseInt(e[2], jinbup);
-                }
-
-                e[4] = Integer.toString(result, jinbup);
-
-                resultSet.add(e[4]);
+            for (int base = 2; base <= 9; base++) {
+                if (!validBases[base]) continue;
+                int left = Integer.parseInt(parts[0], base);
+                int right = Integer.parseInt(parts[2], base);
+                int result = parts[1].equals("+") ? left + right : left - right;
+                results.add(Integer.toString(result, base));
             }
 
-            // resultSet이 2이상이면 ?로 결과
-            if (resultSet.size() >= 2) {
-                answer[idx] = expression.replace("X", "?");
-            } else {
-                answer[idx] = expression.replace("X", e[4]);
-            }
-            idx++;
+            parts[4] = results.size() >= 2 ? "?" : results.iterator().next();
+            answer[idx++] = String.join(" ", parts);
         }
 
         return answer;
     }
 
-    private String convert(int num, int jinbup) {
-        StringBuilder sb = new StringBuilder();
-        while (num > 0) {
-            sb.append(num % jinbup);
-            num /= jinbup;
+    /**
+     * 수식에서 가장 큰 숫자를 확인하여 진법 제한을 업데이트합니다.
+     */
+    private void updateValidBases(boolean[] validBases, int maxValue) {
+        for (int i = 2; i <= maxValue; i++) {
+            validBases[i] = false;
         }
-        return sb.reverse().toString();
     }
 
-    private int getMaxValue(String num) {
-        int n = Integer.parseInt(num);
-        int maxValue = 0;
-        while (n > 0) {
-            maxValue = Math.max(maxValue, n % 10);
-            n = n / 10;
+    /**
+     * 주어진 수식에서 가장 큰 숫자를 찾습니다.
+     */
+    private int getMaxDigit(String num) {
+        int maxDigit = 0;
+        for (char c : num.toCharArray()) {
+            maxDigit = Math.max(maxDigit, c - '0');
         }
-        return maxValue;
+        return maxDigit;
     }
 }
