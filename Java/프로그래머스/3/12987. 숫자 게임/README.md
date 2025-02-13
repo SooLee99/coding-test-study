@@ -1,6 +1,6 @@
 # [level 3] 숫자 게임 - 12987 
 
-[문제 링크](https://school.programmers.co.kr/learn/courses/30/lessons/12987?language=java) 
+[문제 링크](https://school.programmers.co.kr/learn/courses/30/lessons/12987) 
 
 ### 성능 요약
 
@@ -16,7 +16,7 @@
 
 ### 제출 일자
 
-2025년 02월 12일 15:29:37
+2025년 02월 13일 16:19:41
 
 ### 문제 설명
 
