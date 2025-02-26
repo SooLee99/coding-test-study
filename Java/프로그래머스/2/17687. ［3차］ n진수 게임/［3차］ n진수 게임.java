@@ -1,29 +1,27 @@
-import java.util.*;
 class Solution {
     public String solution(int n, int t, int m, int p) {
-        StringBuilder answer = new StringBuilder();
-        StringBuilder sb = new StringBuilder();
-        
-        //10진수 0부터시작, 총있어야 숫자의 개수 
-        int num = 0 , len = t*m;
-        
-        //n진수로 변환 후 sb에 붙여주기.
-        while(sb.length()<len) {
-            //16진수일 경우 A~F는 소문자로 나오기때문에 대문자로 고쳐주기위한 toUpperCase() 사용한다.
-        	String temp = Integer.toString(num,n).toUpperCase();
-        	sb.append(temp);
-        	num++;
-        }
-        
-        //len의 길이만큼만 사용할꺼임.
-        String str = sb.substring(0, len);
-        
-        //p번째(인덱스로는 p-1번째)부터 시작해서 m번재 마다 읽어준다.
-        for(int i=p-1; i<str.length(); i+=m) {
-        	char ch = str.charAt(i);
-        	answer.append(ch);
-        }
-        return answer.toString();
-
+        int totalLength = t * m;
+        String fullSequence = generateFullSequence(n, totalLength);
+        return selectTubeNumbers(fullSequence, m, p);
     }
+
+    private String generateFullSequence(int n, int totalLength) {
+        StringBuilder sb = new StringBuilder();
+        int num = 0;
+        while (sb.length() < totalLength) {
+            String converted = Integer.toString(num, n).toUpperCase();
+            sb.append(converted);
+            num++;
+        }
+        return sb.substring(0, totalLength);
+    }
+
+    private String selectTubeNumbers(String fullSequence, int m, int p) {
+        StringBuilder tubeAnswer = new StringBuilder();
+        for (int i = p - 1; i < fullSequence.length(); i += m) {
+            tubeAnswer.append(fullSequence.charAt(i));
+        }
+        return tubeAnswer.toString();
+    }
+
 }
