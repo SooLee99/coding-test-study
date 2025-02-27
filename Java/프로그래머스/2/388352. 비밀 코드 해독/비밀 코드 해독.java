@@ -1,33 +1,51 @@
 import java.util.*;
+
 class Solution {
-    int answer = 0;
     public int solution(int n, int[][] q, int[] ans) {
-        DFS(0, 1, n, q, ans, new int[5]);
-        return answer;
+        List<Set<Integer>> possibleCodes = new ArrayList<>();
+
+        generateCombinations(n, 5, new HashSet<>(), 1, possibleCodes);
+
+        return filterValidCodes(possibleCodes, q, ans);
     }
-    void DFS(int x, int y, int n, int[][] q, int[] ans, int[] list)
-    {
-        int i0, i1, i2, t0;
-        if(x==5)
-        {
-            for(i0 = 0; i0 < q.length; i0++)
-            {
-                t0 = 0;
-                for(i1 = 0; i1 < 5; i1++)
-                    for(i2 = 0; i2 < 5; i2++)
-                        if(list[i1]==q[i0][i2])
-                            t0++;
-                if(t0!=ans[i0])
-                    break;
-            }
-            if(i0 == q.length)
-                answer++;
+
+    private void generateCombinations(int n, int size, Set<Integer> current, int start, List<Set<Integer>> result) {
+        if (current.size() == size) {
+            result.add(new HashSet<>(current));
             return;
         }
-        for(; y <= n; y++)
-        {
-            list[x] = y;
-            DFS(x+1, y+1, n, q, ans, list);
+
+        for (int i = start; i <= n; i++) {
+            current.add(i);
+            generateCombinations(n, size, current, i + 1, result);
+            current.remove(i);
         }
+    }
+
+    private int filterValidCodes(List<Set<Integer>> possibleCodes, int[][] q, int[] ans) {
+        int count = 0;
+
+        for (Set<Integer> code : possibleCodes) {
+            boolean isValid = true;
+
+            for (int i = 0; i < q.length; i++) {
+                int matchCount = 0;
+                for (int num : q[i]) {
+                    if (code.contains(num)) {
+                        matchCount++;
+                    }
+                }
+                if (matchCount != ans[i]) {
+                    isValid = false;
+                    break;
+                }
+            }
+
+            if (isValid) {
+                count++;
+            }
+        }
+
+        return count;
     }
 }
