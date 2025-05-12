@@ -4,10 +4,10 @@ import java.io.IOException;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        // BufferedReader를 사용하여 입력을 빠르게 처리
+        // TODO: 입력받기
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-
-        // 입력된 한 줄을 공백 기준으로 split하고 각각 long으로 변환하여 더함
+        
+        // TODO: 입력받은 숫자들을 나눔
         String[] input = br.readLine().split(" ");
         long A = Long.parseLong(input[0]);
         long B = Long.parseLong(input[1]);
