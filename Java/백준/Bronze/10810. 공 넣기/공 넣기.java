@@ -3,73 +3,48 @@ import java.util.*;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer st = new StringTokenizer(br.readLine(), " ");
+        FastReader fr = new FastReader();
 
-        int n = Integer.parseInt(st.nextToken());
-        int m = Integer.parseInt(st.nextToken());
+        // 1) N(바구니 개수), M(명령 개수)
+        int n = fr.nextInt();
+        int m = fr.nextInt();
 
-        BasketManager manager = new BasketManager(n);
+        // 2) 바구니 초기화: new int[n] 은 자동으로 모두 0으로 채워짐
+        int[] baskets = new int[n];
 
-        for (int i = 0; i < m; i++) {
-            st = new StringTokenizer(br.readLine(), " ");
-            int start = Integer.parseInt(st.nextToken());
-            int end   = Integer.parseInt(st.nextToken());
-            int k     = Integer.parseInt(st.nextToken());
-            manager.applyCommand(start, end, k);
+        // 3) M개의 명령 처리: [i..j] 구간을 k로 덮어쓰기
+        for (int cmd = 0; cmd < m; cmd++) {
+            int i = fr.nextInt() - 1;
+            int j = fr.nextInt() - 1;
+            int k = fr.nextInt();
+            for (int idx = i; idx <= j; idx++) {
+                baskets[idx] = k;
+            }
         }
 
-        StringBuilder sb = new StringBuilder();
-        for (int val : manager.getFinalStates()) {
-            sb.append(val).append(' ');
+        // 4) 결과 출력: 한 번에 조합
+        StringBuilder sb = new StringBuilder(n * 2);
+        for (int v : baskets) {
+            sb.append(v).append(' ');
         }
         System.out.println(sb.toString().trim());
     }
 
-    static class Basket {
-        // 마지막 저장된 값만을 보관
-        private int lastValue;
-
-        public Basket() {
-            this.lastValue = 0;          // 초기값 0
+    // BufferedReader + StringTokenizer 조합으로 빠르게 토큰 단위 읽기
+    static class FastReader {
+        final BufferedReader br;
+        StringTokenizer st;
+        FastReader() {
+            br = new BufferedReader(new InputStreamReader(System.in));
         }
-
-        // k 로 덮어쓰기
-        public void setValue(int k) {
-            this.lastValue = k;          // ← 세미콜론 추가!
-        }
-
-        public int getLast() {
-            return lastValue;
-        }
-    }
-
-    static class BasketManager {
-        private final List<Basket> baskets;
-
-        public BasketManager(int n) {
-            baskets = new ArrayList<>(n);
-            for (int i = 0; i < n; i++) {
-                baskets.add(new Basket());
+        String next() throws IOException {
+            while (st == null || !st.hasMoreTokens()) {
+                st = new StringTokenizer(br.readLine(), " ");
             }
+            return st.nextToken();
         }
-
-        /**
-         * 1-based 구간 [start..end] 의 모든 바구니를 k 로 덮어쓴다
-         */
-        public void applyCommand(int start, int end, int k) {
-            for (int idx = start - 1; idx < end; idx++) {
-                baskets.get(idx).setValue(k);
-            }
-        }
-
-        /** 각 바구니의 마지막 값을 리스트로 반환 */
-        public List<Integer> getFinalStates() {
-            List<Integer> result = new ArrayList<>(baskets.size());
-            for (Basket b : baskets) {
-                result.add(b.getLast());
-            }
-            return result;
+        int nextInt() throws IOException {
+            return Integer.parseInt(next());
         }
     }
 }
