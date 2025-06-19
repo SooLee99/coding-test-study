@@ -1,50 +1,75 @@
 import java.io.*;
 import java.util.*;
-import java.lang.StringBuilder;
 
-public class Main{
+public class Main {
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
         StringTokenizer st = new StringTokenizer(br.readLine(), " ");
-        
-        // 첫째 줄 입력 받기: 도현이가 가진 바구니의 총 개수 N (1번 ~ N번까지)
+
         int n = Integer.parseInt(st.nextToken());
-
-        // 1) 바구니들을 담을 리스트 선언 및 초기화
-        List<List<Integer>> baskets = new ArrayList<>(n);
-
-        // 2) n개의 빈 ArrayList<Integer> 생성해서 추가
-        for (int i = 0; i < n; i++) {
-            baskets.add(new ArrayList<>());
-            // 가장 처음 바구니에는 공이 들어가지 않음. => 0
-            baskets.get(i).add(0);
-        }
-        
-        // 둘째 줄 입력 받기: 더 입력받을 줄의 개수 M
         int m = Integer.parseInt(st.nextToken());
-        
-        // 3) 셋째 줄부터 M줄: 각 명령(i, j, k)을 읽어서 처리
-        for (int cmd = 0; cmd < m; cmd++) {
-            st = new StringTokenizer(br.readLine());
-            int i = Integer.parseInt(st.nextToken());  // 시작 바구니 번호
-            int j = Integer.parseInt(st.nextToken());  // 끝 바구니 번호
-            int k = Integer.parseInt(st.nextToken());  // 채울 값
 
-            // i번~j번 바구니에 k로 덮어쓰기
-            // 배열 인덱스는 0부터 시작하므로 (i-1)에서 (j-1)까지
-            for (int idx = i - 1; idx <= j - 1; idx++) {
-                baskets.get(idx).add(k);
+        BasketManager manager = new BasketManager(n);
+
+        for (int i = 0; i < m; i++) {
+            st = new StringTokenizer(br.readLine(), " ");
+            int start = Integer.parseInt(st.nextToken());
+            int end   = Integer.parseInt(st.nextToken());
+            int k     = Integer.parseInt(st.nextToken());
+            manager.applyCommand(start, end, k);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (int val : manager.getFinalStates()) {
+            sb.append(val).append(' ');
+        }
+        System.out.println(sb.toString().trim());
+    }
+
+    static class Basket {
+        // 마지막 저장된 값만을 보관
+        private int lastValue;
+
+        public Basket() {
+            this.lastValue = 0;          // 초기값 0
+        }
+
+        // k 로 덮어쓰기
+        public void setValue(int k) {
+            this.lastValue = k;          // ← 세미콜론 추가!
+        }
+
+        public int getLast() {
+            return lastValue;
+        }
+    }
+
+    static class BasketManager {
+        private final List<Basket> baskets;
+
+        public BasketManager(int n) {
+            baskets = new ArrayList<>(n);
+            for (int i = 0; i < n; i++) {
+                baskets.add(new Basket());
             }
         }
-        
-         // 3) 결과: 각 바구니의 “마지막 값”만 꺼내서 출력
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < n; i++) {
-            List<Integer> list = baskets.get(i);
-            // list.size()-1 위치가 마지막으로 추가된 값
-            sb.append(list.get(list.size() - 1)).append(' ');
+
+        /**
+         * 1-based 구간 [start..end] 의 모든 바구니를 k 로 덮어쓴다
+         */
+        public void applyCommand(int start, int end, int k) {
+            for (int idx = start - 1; idx < end; idx++) {
+                baskets.get(idx).setValue(k);
+            }
         }
-        // 맨 끝 공백 제거하고 출력
-        System.out.println(sb.toString().trim());
+
+        /** 각 바구니의 마지막 값을 리스트로 반환 */
+        public List<Integer> getFinalStates() {
+            List<Integer> result = new ArrayList<>(baskets.size());
+            for (Basket b : baskets) {
+                result.add(b.getLast());
+            }
+            return result;
+        }
     }
 }
