@@ -5,53 +5,34 @@ import java.io.IOException;
 public class Main {
 	public static void main(String[] args) throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		char[] inputChars = br.readLine().toCharArray();
-		int count = 0;                // 문자 개수
+		String word = br.readLine();
+		int count = 0;
 
-		for (int i = 0; i < inputChars.length; i++) {
-			if (inputChars.length-2 > i) {
-				if (isCroatian3Letter(inputChars[i], inputChars[i + 1], inputChars[i + 2])) {
+		for (int i = 0; i < word.length(); ) {
+			// 3글자 크로아티아 알파벳: dz=
+			if (i + 2 < word.length() && word.charAt(i) == 'd' && word.charAt(i + 1) == 'z' && word.charAt(i + 2) == '=') {
+				count++;
+				i += 3;
+			}
+			// 2글자 크로아티아 알파벳
+			else if (i + 1 < word.length()) {
+				String pair = word.substring(i, i + 2);
+				if (pair.equals("c=") || pair.equals("c-") || pair.equals("d-") ||
+				    pair.equals("lj") || pair.equals("nj") || pair.equals("s=") || pair.equals("z=")) {
 					count++;
-					i += 2; // 3글자이므로 인덱스를 2 증가
-				}
-				// 2글자 비교
-				else if (isCroatian2Letter(inputChars[i], inputChars[i + 1])) {
+					i += 2;
+				} else {
 					count++;
-					i += 1; // 2글자이므로 인덱스를 1 증가
+					i++;
 				}
-				// 일반 문자
-				else {
-					count += 1;
-				}
-			} else if(inputChars.length - 1 > i) {
-				// 2글자 비교
-				if (isCroatian2Letter(inputChars[i], inputChars[i + 1])) {
-					count++;
-					i += 1;
-				}
-				// 일반 문자
-				else {
-					count += 1;
-				}
-			} else {
-				// 마지막 문자 처리
-				count += 1;
+			}
+			// 일반 문자
+			else {
+				count++;
+				i++;
 			}
 		}
 
 		System.out.println(count);
-	}
-
-	public static boolean isCroatian3Letter(char a, char b, char c){
-		String comparativeString3 = String.valueOf(a) + String.valueOf(b) + String.valueOf(c);
-		return comparativeString3.equals("dz=");
-	}
-
-	public static boolean isCroatian2Letter(char a, char b){
-		String comparativeString2 = String.valueOf(a) + String.valueOf(b);
-		return comparativeString2.equals("lj") || comparativeString2.equals("nj") ||
-			comparativeString2.equals("c=") || comparativeString2.equals("c-") ||
-			comparativeString2.equals("d-") || comparativeString2.equals("s=") ||
-			comparativeString2.equals("z=");
 	}
 }
