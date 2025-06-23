@@ -5,34 +5,36 @@ import java.io.IOException;
 public class Main {
 	public static void main(String[] args) throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-		String word = br.readLine();
+		char[] inputChars = br.readLine().toCharArray();
 		int count = 0;
 
-		for (int i = 0; i < word.length(); ) {
-			// 3글자 크로아티아 알파벳: dz=
-			if (i + 2 < word.length() && word.charAt(i) == 'd' && word.charAt(i + 1) == 'z' && word.charAt(i + 2) == '=') {
+		for (int i = 0; i < inputChars.length; i++) {
+			// 3글자 크로아티아 문자: dz=
+			if (i + 2 < inputChars.length &&
+			    inputChars[i] == 'd' && inputChars[i + 1] == 'z' && inputChars[i + 2] == '=') {
 				count++;
-				i += 3;
+				i += 2;
 			}
-			// 2글자 크로아티아 알파벳
-			else if (i + 1 < word.length()) {
-				String pair = word.substring(i, i + 2);
-				if (pair.equals("c=") || pair.equals("c-") || pair.equals("d-") ||
-				    pair.equals("lj") || pair.equals("nj") || pair.equals("s=") || pair.equals("z=")) {
-					count++;
-					i += 2;
-				} else {
-					count++;
-					i++;
-				}
+			// 2글자 크로아티아 문자
+			else if (i + 1 < inputChars.length && isCroatian2Letter(inputChars[i], inputChars[i + 1])) {
+				count++;
+				i += 1;
 			}
 			// 일반 문자
 			else {
 				count++;
-				i++;
 			}
 		}
 
 		System.out.println(count);
+	}
+
+	private static boolean isCroatian2Letter(char a, char b) {
+		return (a == 'c' && (b == '=' || b == '-')) ||
+		       (a == 'd' && b == '-') ||
+		       (a == 'l' && b == 'j') ||
+		       (a == 'n' && b == 'j') ||
+		       (a == 's' && b == '=') ||
+		       (a == 'z' && b == '=');
 	}
 }
