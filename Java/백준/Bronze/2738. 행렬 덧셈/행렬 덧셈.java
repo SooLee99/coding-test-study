@@ -1,45 +1,44 @@
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.IOException;
 import java.util.StringTokenizer;
 
 public class Main {
-	public static void main(String[] args) throws Exception {
+
+	public static void main(String[] args) throws IOException {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		StringTokenizer st = new StringTokenizer(br.readLine());
 
 		int n = Integer.parseInt(st.nextToken());
 		int m = Integer.parseInt(st.nextToken());
 
-		int[][] matrices1 = loadMatrixFromInput(br, n, m);
-		int[][] matrices2 = loadMatrixFromInput(br, n, m);
-		sumMatrices(matrices1, matrices2, n, m);
-
-		br.close();
-
+		readMatrixSum(br, n, m);
 	}
 
-	private static int[][] loadMatrixFromInput(BufferedReader br, int n, int m) throws IOException {
-		int[][] matrices = new int[n][m];
-		for(int i = 0; i < n; i++) {
-			StringTokenizer st = new StringTokenizer(br.readLine());
+	// 두 행렬을 읽으며 바로 합산하여 결과 반환
+	private static int[][] readMatrixSum(BufferedReader br, int n, int m) throws IOException {
+		int[][] result = new int[n][m];
+		StringTokenizer st;
+		StringBuilder sb = new StringBuilder();
 
-			for(int j = 0; j < m; j++) {
-				matrices[i][j] = Integer.parseInt(st.nextToken());
+		// 첫 번째 행렬 입력
+		for (int i = 0; i < n; i++) {
+			st = new StringTokenizer(br.readLine());
+			for (int j = 0; j < m; j++) {
+				result[i][j] = Integer.parseInt(st.nextToken());
 			}
 		}
-		return matrices;
-	}
 
-	private static void sumMatrices(int[][] matrices1, int[][] matrices2, int n, int m) {
-		// 두 행렬의 합을 계산하고 출력
-		StringBuilder sb = new StringBuilder();
-		for(int i = 0; i < n; i++) {
-			for(int j = 0; j < m; j++) {
-				sb.append(matrices1[i][j] + matrices2[i][j] + " ");
+		// 두 번째 행렬 입력 + 즉시 합산
+		for (int i = 0; i < n; i++) {
+			st = new StringTokenizer(br.readLine());
+			for (int j = 0; j < m; j++) {
+				result[i][j] += Integer.parseInt(st.nextToken());
+				sb.append(result[i][j]).append(' ');
 			}
-			sb.append("\n");
+			sb.append('\n');
 		}
 		System.out.print(sb);
+		return result;
 	}
 }
